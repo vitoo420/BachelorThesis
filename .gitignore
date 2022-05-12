@@ -50,3 +50,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+CO2FluxMeter/Debug
+CO2FluxMeter/Release
+CO2FluxMeter/.settings
