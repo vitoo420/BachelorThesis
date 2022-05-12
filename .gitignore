@@ -54,3 +54,4 @@ dkms.conf
 CO2FluxMeter/Debug
 CO2FluxMeter/Release
 CO2FluxMeter/.settings
+CO2FluxMeter/LoRaWAN/App/se-identity.h
