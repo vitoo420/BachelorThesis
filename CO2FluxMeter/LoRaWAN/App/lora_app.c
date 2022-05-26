@@ -81,6 +81,15 @@ struct LogData
 	float flux;
 };
 
+struct LoRaWANData
+{
+	uint16_t avgPpmStart;
+	uint16_t avgPpmEnd;
+	int16_t avgTempStart;
+	int16_t avgTempEnd;
+	uint16_t flux;
+};
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -315,6 +324,7 @@ static void SendTxData(void)
 	UTIL_TIMER_Time_t nextTxIn = 0;
 
 	struct LogData saveData;
+	struct LoRaWANData sendData;
 	/*VLEVEL_L 1       !< just essential traces */
 	/*VLEVEL_M 2       !< functional traces */
 	/*VLEVEL_H 3       !< all traces */
@@ -337,7 +347,7 @@ static void SendTxData(void)
 	saveData.avgTempStart = saveData.avgTempStart / NUM_OF_SAMPLES;
 	printf("%d ppm %f°C avg \r\n", saveData.avgPpmStart, saveData.avgTempStart);
 
-	//HAL_Delay(DELAY_MIN * 60000);
+	HAL_Delay(DELAY_MIN * 60000);
 
 	//sber vzorku z konce
 	for(int i = 0; i < NUM_OF_SAMPLES; i++)
@@ -360,7 +370,7 @@ static void SendTxData(void)
 	printf("################## MEASURING CYCLE FINISHED ##################\r\n");
 
 	printf("################## WRITING SD CARD STARTED ##################\r\n");
-	fresult = f_open(&fil, "app_log.csv", FA_OPEN_APPEND | FA_WRITE | FA_READ);
+	fresult = f_open(&fil, "night_session.csv", FA_OPEN_APPEND | FA_WRITE | FA_READ);
 
 	//konverze float na string
 	char temperatureStartString[13];
@@ -401,19 +411,21 @@ static void SendTxData(void)
 	printf("################## SENDING OVER LORAWAN STARTED ##################\r\n");
 	AppData.Port = LORAWAN_USER_APP_PORT;
 	//teplota start
-	saveData.avgTempStart = saveData.avgTempStart * 100;
-	AppData.Buffer[i++] = (uint8_t)((int16_t)saveData.avgTempStart >> 8 & 0xFF);
-	AppData.Buffer[i++] = (uint8_t)((int16_t)saveData.avgTempStart & 0xFF);
+	sendData.avgTempStart = saveData.avgTempStart * 100;
+	AppData.Buffer[i++] = (uint8_t)(sendData.avgTempStart >> 8 & 0xFF);
+	AppData.Buffer[i++] = (uint8_t)(sendData.avgTempStart & 0xFF);
 	//teplota end
-	saveData.avgTempEnd = saveData.avgTempEnd * 100;
-	AppData.Buffer[i++] = (uint8_t)((int16_t)saveData.avgTempEnd >> 8 & 0xFF);
-	AppData.Buffer[i++] = (uint8_t)((int16_t)saveData.avgTempEnd & 0xFF);
+	sendData.avgTempEnd = saveData.avgTempEnd * 100;
+	AppData.Buffer[i++] = (uint8_t)(sendData.avgTempEnd >> 8 & 0xFF);
+	AppData.Buffer[i++] = (uint8_t)(sendData.avgTempEnd & 0xFF);
 	//ppmstart
-	AppData.Buffer[i++] = (uint8_t)(saveData.avgPpmStart >> 8 & 0xFF);
-	AppData.Buffer[i++] = (uint8_t)(saveData.avgPpmStart & 0xFF);
+	sendData.avgPpmStart = saveData.avgPpmStart;
+	AppData.Buffer[i++] = (uint8_t)(sendData.avgPpmStart >> 8 & 0xFF);
+	AppData.Buffer[i++] = (uint8_t)(sendData.avgPpmStart & 0xFF);
 	//ppmend
-	AppData.Buffer[i++] = (uint8_t)(saveData.avgPpmEnd >> 8 & 0xFF);
-	AppData.Buffer[i++] = (uint8_t)(saveData.avgPpmEnd & 0xFF);
+	sendData.avgPpmEnd = saveData.avgPpmEnd;
+	AppData.Buffer[i++] = (uint8_t)(sendData.avgPpmEnd >> 8 & 0xFF);
+	AppData.Buffer[i++] = (uint8_t)(sendData.avgPpmEnd & 0xFF);
 	//flux
 	/*LoRaParser.f = saveData.flux;
 	AppData.Buffer[i++] = LoRaParser.ui8[3];
