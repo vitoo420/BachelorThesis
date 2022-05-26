@@ -347,7 +347,7 @@ static void SendTxData(void)
 	saveData.avgTempStart = saveData.avgTempStart / NUM_OF_SAMPLES;
 	printf("%d ppm %f°C avg \r\n", saveData.avgPpmStart, saveData.avgTempStart);
 
-	//HAL_Delay(DELAY_MIN * 60000);
+	HAL_Delay(DELAY_MIN * 60000);
 
 	//sber vzorku z konce
 	for(int i = 0; i < NUM_OF_SAMPLES; i++)
@@ -370,7 +370,7 @@ static void SendTxData(void)
 	printf("################## MEASURING CYCLE FINISHED ##################\r\n");
 
 	printf("################## WRITING SD CARD STARTED ##################\r\n");
-	fresult = f_open(&fil, "app_log.csv", FA_OPEN_APPEND | FA_WRITE | FA_READ);
+	fresult = f_open(&fil, "night_session.csv", FA_OPEN_APPEND | FA_WRITE | FA_READ);
 
 	//konverze float na string
 	char temperatureStartString[13];
