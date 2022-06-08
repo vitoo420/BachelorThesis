@@ -87,7 +87,7 @@ struct LoRaWANData
 	uint16_t avgPpmEnd;
 	int16_t avgTempStart;
 	int16_t avgTempEnd;
-	uint16_t flux;
+	int32_t flux;
 };
 
 /* USER CODE END PTD */
@@ -363,21 +363,22 @@ static void SendTxData(void)
 	printf("%d ppm %f°C\r\n", saveData.avgPpmEnd, saveData.avgTempEnd);
 
 	float avgTemp = (saveData.avgTempStart + saveData.avgTempEnd) / 2;
-	float deltaCdt = (saveData.avgPpmEnd-saveData.avgPpmStart) / (DELAY_MIN * 60);
+	float deltaCdt = (saveData.avgPpmEnd-saveData.avgPpmStart) / (float)(DELAY_MIN * 60);
 	saveData.flux = ((float)(10140 * CHAMBER_VOLUME) / (GAS_CONSTANT * (273.15 + (avgTemp)) * COVERED_AREA)) * deltaCdt;
 	printf("%f umol m^-2 s-1\r\n", saveData.flux);
 
 	printf("################## MEASURING CYCLE FINISHED ##################\r\n");
 
 	printf("################## WRITING SD CARD STARTED ##################\r\n");
-	fresult = f_open(&fil, "night_session.csv", FA_OPEN_APPEND | FA_WRITE | FA_READ);
+	fresult = f_open(&fil, "presentation.csv", FA_OPEN_APPEND | FA_WRITE | FA_READ);
 
 	//konverze float na string
-	char temperatureStartString[13];
-	char temperatureEndString[13];
+	char temperatureStartString[9];
+	char temperatureEndString[9];
+	char fluxString[13];
 	sprintf(temperatureStartString, "%f", saveData.avgTempStart);
 	sprintf(temperatureEndString, "%f", saveData.avgTempEnd);
-	//printf("%s\r\n", ppmStartString);
+	sprintf(fluxString, "%f", saveData.flux);
 
 	//nacteni aktualniho casu
 	getTime();
@@ -394,10 +395,15 @@ static void SendTxData(void)
 	bufclear(buffer, sizeof(buffer)/sizeof(buffer[0]));
 	fresult = f_write(&fil, ";", 1, &bw);
 
-	f_printf(&fil, "%d", saveData.avgPpmStart);
+	f_printf(&fil, "%d", saveData.avgPpmEnd);
 	fresult = f_write(&fil, ";", 1, &bw);
 
 	strcpy(buffer, temperatureEndString);
+	fresult = f_write(&fil, buffer, bufsize(buffer), &bw);
+	bufclear(buffer, sizeof(buffer)/sizeof(buffer[0]));
+	fresult = f_write(&fil, ";", 1, &bw);
+
+	strcpy(buffer, fluxString);
 	fresult = f_write(&fil, buffer, bufsize(buffer), &bw);
 	bufclear(buffer, sizeof(buffer)/sizeof(buffer[0]));
 
@@ -427,31 +433,13 @@ static void SendTxData(void)
 	AppData.Buffer[i++] = (uint8_t)(sendData.avgPpmEnd >> 8 & 0xFF);
 	AppData.Buffer[i++] = (uint8_t)(sendData.avgPpmEnd & 0xFF);
 	//flux
-	/*LoRaParser.f = saveData.flux;
-	AppData.Buffer[i++] = LoRaParser.ui8[3];
-	AppData.Buffer[i++] = LoRaParser.ui8[2];
-	AppData.Buffer[i++] = LoRaParser.ui8[1];
-	AppData.Buffer[i++] = LoRaParser.ui8[0];*/
+	sendData.flux = saveData.flux * 1000000;
+	AppData.Buffer[i++] = (uint8_t)(sendData.flux >> 24 & 0xFF);
+	AppData.Buffer[i++] = (uint8_t)(sendData.flux >> 16 & 0xFF);
+	AppData.Buffer[i++] = (uint8_t)(sendData.flux >> 8 & 0xFF);
+	AppData.Buffer[i++] = (uint8_t)(sendData.flux & 0xFF);
 
 	AppData.Buffer[i++] = GetBatteryLevel();        /* 1 (very low) to 254 (fully charged)*/
-	/*float temp = 0;
-	int16_t gas = 0;
-
-	temp = DS18B20_ReadTemperature();
-	gas = MHZ16_Read();
-
-	LoRaParser.f = temp;
-	printf("%f aaa", LoRaParser.f);
-
-	AppData.Port = LORAWAN_USER_APP_PORT;
-	AppData.Buffer[i++] = AppLedStateOn;
-	AppData.Buffer[i++] = (uint8_t)((gas >> 8) & 0xFF);
-	AppData.Buffer[i++] = (uint8_t)(gas & 0xFF);
-	AppData.Buffer[i++] = LoRaParser.ui8[4];
-	AppData.Buffer[i++] = LoRaParser.ui8[3]; //(((uint8_t)temp >> 16) & 0xFF);
-	AppData.Buffer[i++] = LoRaParser.ui8[2]; //(((uint8_t)temp >> 8) & 0xFF);
-	AppData.Buffer[i++] = LoRaParser.ui8[1]; //((uint8_t)temp & 0xFF);*/
-
 
 	AppData.BufferSize = i;
 

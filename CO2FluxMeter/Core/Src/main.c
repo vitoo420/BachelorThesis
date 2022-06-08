@@ -174,18 +174,17 @@ int main(void)
   else printf("SD_CARD mounted successfully!\n");
   if(fresult == FR_OK)
   {
-  /*card capacity details*/
-  f_getfree("", &fre_clust, &pfs);
+	  /*card capacity details*/
+	  f_getfree("", &fre_clust, &pfs);
 
-  total = (uint32_t)((pfs->n_fatent - 2) * pfs->csize * 0.5);
-  sprintf(buffer, "SD CARD Total Size: \t%lu\r\n", total);
-  printf(buffer);
-  bufclear(&buffer[0], sizeof(buffer)/sizeof(buffer[0]));
-  free_space = (uint32_t)(fre_clust * pfs->csize * 0.5);
-  sprintf(buffer, "SD CARD Free Space: \t%lu\r\n", free_space);
-  printf(buffer);
-  bufclear(&buffer[0], sizeof(buffer)/sizeof(buffer[0]));
-
+	  total = (uint32_t)((pfs->n_fatent - 2) * pfs->csize * 0.5);
+	  sprintf(buffer, "SD CARD Total Size: \t%lu\r\n", total);
+	  printf(buffer);
+	  bufclear(&buffer[0], sizeof(buffer)/sizeof(buffer[0]));
+	  free_space = (uint32_t)(fre_clust * pfs->csize * 0.5);
+	  sprintf(buffer, "SD CARD Free Space: \t%lu\r\n", free_space);
+	  printf(buffer);
+	  bufclear(&buffer[0], sizeof(buffer)/sizeof(buffer[0]));
   }
   /* USER CODE END 2 */
 
